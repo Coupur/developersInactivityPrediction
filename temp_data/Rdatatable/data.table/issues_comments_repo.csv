@@ -1,0 +1,16 @@
+repo,created_at,created_by,issue_id,comment_id,body
+Rdatatable/data.table,2025-08-28 01:30:18+00:00,jangorecki,3360866188,3230930564,Then by=.I seems to be the proper way.
+Rdatatable/data.table,2025-08-28 01:34:02+00:00,MichaelChirico,3360866188,3230961648,how would that work exactly? we need information from .GRP-n
+Rdatatable/data.table,2025-08-28 02:03:35+00:00,jangorecki,3360866188,3231171042,"Uh yes, I misunderstood. Would be good to provide expected output in the first post. Agree feature like this could be helpful in some cases."
+Rdatatable/data.table,2025-08-28 02:12:09+00:00,MichaelChirico,3360866188,3231246659,"yes, my fault :)"
+Rdatatable/data.table,2025-08-28 14:09:43+00:00,venom1204,3360866188,3233659372,"hi @MichaelChirico 
+
+My proposed solution is to introduce a new argument, rowwise = FALSE.
+
+Approach:
+
+- This is a non-breaking change; the default behavior of shifting within list cells remains the same.
+- The implementation is minimal and efficient. When rowwise=TRUE, the C code will wrap the list column in a temporary list of length one. This allows the existing VECSXP logic to perform the row-wise shift correctly without a major rewrite.
+
+Please let me know if this approach sounds good before I prepare a pull request.
+Thanks"

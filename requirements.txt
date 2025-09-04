@@ -1,0 +1,11 @@
+requests
+matplotlib
+numpy
+pandas
+PyGithub
+GitPython
+PyYAML
+scipy
+seaborn
+jupyter
+statsmodels

@@ -1,0 +1,16 @@
+repo,created_at,created_by,issue_id,title,labels,state,body,assignees,milestone
+Rdatatable/data.table,2025-08-27 21:10:46+00:00,MichaelChirico,3360866188,shift(<list column>),non-atomic column,open,"```r
+DT = data.table(a = list(1, 2:3, 4:6))
+DT[, .(a, shift(a))]
+#         a       V2
+#    <list>   <list>
+# 1:      1       NA
+# 2:    2,3    NA, 2
+# 3:  4,5,6 NA, 4, 5
+```
+
+This is described in `?shift`:
+
+https://github.com/Rdatatable/data.table/blob/1a5003bd5e4df68c79218bf6ef831feeb94db876/man/shift.Rd#L29
+
+It's not clear to me whether it's possible to just shift the list row-wise as I'd intended. Is it possible to support this?",,
