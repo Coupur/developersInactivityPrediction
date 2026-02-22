@@ -1,2 +1,0 @@
-####### Module map (module,file) #######
-#git_repository_name;file_path;subsystem

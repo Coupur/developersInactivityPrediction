@@ -133,3 +133,10 @@ dmypy.json
 
 # VSCode
 .vscode/
+*.json
+*.csv
+/Test
+Extractors/test.ipynb
+test.ipynb
+test.ipynb
+test.ipynb

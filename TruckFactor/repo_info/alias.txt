@@ -1,2 +1,0 @@
-####### List of user name aliases #######
-#git_repository_name;user_name;user_alias_name

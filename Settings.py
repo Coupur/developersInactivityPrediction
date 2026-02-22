@@ -1,8 +1,32 @@
 ### GitHub Settings
 items_per_page = 100  # The number of results in each page of the GitHub results. Max: 100
-tokens_file = "../Resources/tokens.csv"  # The relative path of the file containing the list of the github tokens
+tokens_file = "../Resources/tokens.csv"
+repos_file  = "../Resources/repositories.txt"
+
+ # The relative path of the file containing the list of the github tokens
 main_file_path = r"C:\Users\samut\OneDrive\Documents\GitHub\developersInactivityAnalysisCOPY"
 
+#All folders
+
+main_folder = "../Organizations"
+collection_folder = "/RawData"
+TF_developers_folder = "TruckFactor"
+user_timelines_folder = "/UserTimelines"
+timeline_folder = "/Timelines"
+labeled_timeline_folder = "/Labeled_Timelines"
+social_network_metrics_folder = "SocialTechnicalNetwork"
+project_health_metrics_folder = "Project_Health_Metrics"
+
+
+timeline_file = "timeline_combined.csv"
+social_technical_metrics_combined = "timeline_combined.csv"
+
+dev_health_metrics_folder = "DevHealthMetrics"
+
+photo_folder= "Images"
+
+
+# All files
 
 next_page = "next_page_PR.txt"
 last_page ="last_flushed_page_PR.txt"
@@ -11,9 +35,24 @@ last_page_commits = "last_flushed_page_commits.txt"  # The file where the last f
 next_page_issues = "next_page_issues.txt"  # The file where the next page of the issues will be stored
 last_page_issues = "last_flushed_page_issues.txt"  # The file where the last flushed page of the issues will be stored
 
+per_file_commits_path = "per_file_commits.csv"  # The file where the per-file commits will be stored
+repo_tree_path = "repo_tree.csv"  # The file where the repo tree snapshot will be stored
+
+data_cursor = "data_cursor.json"  # The file where the next page of the issues will be stored
+
+excluded_csv = "excluded_data_points.csv"  # The file where the excluded repos will be listed
+
+author_map_file = "author_map.csv"
+DOE_file = "DOE.csv"
+TF_developers_file = "TruckFactor.csv"
+
+dev_health_metrics = "dev_health_metrics.csv"
+folder_summary_df = "folder_summary_df.csv"
+dev_summary_df = "dev_summary_df.csv"
+
+
 ### Extraction Settings
 data_collection_date = "2025-08-26"  # The max date to consider for the commits and activities extraction
-repos_file = "Resources/repositories.txt"  # The relative path of the file containing the list of the repos <organization/repo>
 main_folder = "../Organizations"  # The main folder where results will be archived
 logs_folder = "../logs"  # The folder where the logs will be archived
 results_folder = "/Results"  # The folder where the results will be archived
@@ -24,7 +63,7 @@ model_path = "../PredictionModel/model.joblib"
 supported_modes = ['tf', 'a80', 'a80mod', 'a80api']
 
 TF_report_folder = "../Organizations/.tf_cache"  # The folder where the TF/core developers are archived
-TF_developers_file = "TruckFactor.csv" # The file where the TF/core developers are listed as <name;login>ù
+truck_factor_file = "truck_factor.json" # The file where the TF/core developers are listed as <name;login>ù
 ## WARNING: The correct path to save the <TF_developers_file> is <TF_report_folder>/<organization/mainRepo>/<TF_developers_file>
 
 A80_report_folder = "../A80_Results"  # The folder where the TF/core developers are archived
@@ -35,13 +74,21 @@ modTh = 5
 pauses_list_file_name = "coding_pauses.csv"  # The file where the lists of devs' pauses durations will be archived
 pauses_dates_file_name = "pauses_coredevs.csv"  # The file where the lists of devs' pauses boundary dates will be archived
 
+model_folder = "model_folder"
 
-commit_history_table_file_name = "commit_history_table.csv"  # The file where the 'devs by dates' table for each repo will be archived
-coding_history_table_file_name = "coding_history_table.csv" # Analogous to Commit_history_table but includes PR creation and NON merged commits
-issue_comments_list_file_name = "issues_comments_repo.csv"  
-issue_events_list_file_name = "issues_events_repo.csv"  
-issue_list_file_name = "issues_repo.csv"  
-issue_timeline_file_name = "issues_timeline_repo.csv"  
+commit_history_table_file_name = "commit_history_table.csv"
+coding_history_table_file_name = "coding_history_table.csv"
+issue_comments_list_file_name = "issues_comments_repo.csv"
+issue_events_list_file_name = "issues_events_repo.csv"
+issue_list_file_name = "issues_repo.csv"
+issue_timeline_file_name = "issues_timeline_repo.csv"
+PR_list_file_name= "prs_repo.csv"
+prs_comments_csv = "prs_comments.csv"
+
+
+
+issue_list_file_name = "issues.csv"  
+issue_activity_file_name = "issue_activity.csv"  
 PR_list_file_name= "prs_repo.csv" 
 prs_comments_csv = "prs_comments.csv"  
 commit_list_file_name = "commit_list.csv"  
@@ -75,3 +122,8 @@ G = 'GONE'  # Label of the Gone status: Developers have been Inactive for longer
 #key_folders = ['Activities_Plots', 'Dead&Resurrected_Users', 'Hibernated&Unfrozen_Users', 'Sleeping&Awaken_Users', 'DevStats_Plots', 'Longer_Breaks']
 
 #commit page storage
+
+
+social_technical_metrics_file = "social_technical_metrics.csv"
+
+

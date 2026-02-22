@@ -12,8 +12,10 @@ from tqdm import tqdm               # pip install tqdm
 
 import Settings as cfg
 from pathlib import Path
-
-
+from typing import Sequence, Union
+import csv
+import json
+import portalocker
 
 # ### MODULE FUNCTIONS
 # def waitRateLimit(ghub):
@@ -57,6 +59,8 @@ from pathlib import Path
 import random
 import time
 
+def _norm_time(s):
+    return pandas.to_datetime(s, utc=True, errors="coerce")
 
 def getRandomToken():
     """Return a random token from the tokens list"""
@@ -111,7 +115,14 @@ def updateIsEmpty(token: str, tokens_df: pandas.DataFrame):
         #flush the changes to disk       
         # Save the updated DataFrame back to the CSV file
         return tokens_df, False
-    
+
+def _mask(tok: str) -> str:
+    if not tok: return "<none>"
+    t = tok.strip()
+    return (t[:4] + "…" + t[-4:]) if len(t) > 8 else "<short>"
+
+class BadToken(Exception):
+    pass
 
 def getSameToken(ghub, same_token, position=0):
     """
@@ -123,13 +134,18 @@ def getSameToken(ghub, same_token, position=0):
     -------
     (ghub, same_token, core_remaining, reset_datetime)
     """
-    rl      = ghub.get_rate_limit().core
-    core    = rl.remaining
-    reset_t = rl.reset   # tz-aware UTC datetime
-    if core >= 100:
-        # Plenty of calls left – just return.
-        return ghub, same_token, core, reset_t
-    
+    try:
+        rl      = ghub.get_rate_limit().core
+        core    = rl.remaining
+        reset_t = rl.reset   # tz-aware UTC datetime
+        if core >= 100:
+            # Plenty of calls left – just return.
+            return ghub, same_token, core, reset_t
+    except GithubException as e:
+        if getattr(e, "status", None) == 401:
+                print(f"[GITHUB 401] token_idx={position} token={_mask(same_token)} is invalid")
+                raise BadToken(f"401 for token_idx={position} token={_mask(same_token)}") from e
+        raise
 
     # -----------------------------------------------------------------
     #  We need to wait
@@ -205,6 +221,58 @@ def getNextToken( ghub= None, last_token=None):
 
 
 # Utilities.py  (replace the old add)
+
+def ensure_csv(path: Union[str, Path],
+               columns: Sequence[str],
+               sep: str = ",",
+               encoding: str = "utf-8",
+               create_parents: bool = True) -> Path:
+    """
+    Ensure a CSV exists at `path` with exactly the header `columns` (in order).
+    - If file doesn't exist: create it atomically and write the header.
+    - If file exists but is empty: write the header.
+    - If file exists with data: validate header; raise if it doesn't match.
+
+    Returns the Path to the CSV.
+    """
+    p = Path(path)
+    if create_parents:
+        p.parent.mkdir(parents=True, exist_ok=True)
+    # change sep to string if it is not a string
+    sep = str(sep)
+    # 1) Create atomically with header if it doesn't exist
+    try:
+        with p.open("x", encoding=encoding, newline="") as f:  # exclusive create
+            writer = csv.writer(f, delimiter=sep)
+            writer.writerow(list(columns))
+        return p
+    except FileExistsError:
+        pass  # already exists
+
+    # 2) If exists but empty -> write header
+    if p.stat().st_size == 0:
+        with p.open("w", encoding=encoding, newline="") as f:
+            writer = csv.writer(f, delimiter=sep)
+            writer.writerow(list(columns))
+        return p
+
+    # 3) Validate existing header
+    with p.open("r", encoding="utf-8-sig", newline="") as f:  # utf-8-sig handles potential BOM
+        reader = csv.reader(f, delimiter=sep)
+        try:
+            existing = next(reader)
+        except StopIteration:
+            existing = []
+
+    expected = list(columns)
+    if existing != expected:
+        raise ValueError(
+            f"CSV schema mismatch at {p}.\n"
+            f"  expected: {expected}\n"
+            f"  found   : {existing}"
+        )
+
+    return p
 
 
 def add(df: pandas.DataFrame, row) -> None:
@@ -343,6 +411,83 @@ def checkTFCoverage(projectName, devs):
     perc = (intersection/num_TFs) * 100
 
     return num_TFs, num_devs, perc
+
+
+def getReposList():
+    """Return the list of repositories to analyze."""
+    repos_list = []
+    # Read the repositories from the file
+    filename = cfg.repos_file
+    with open(Path(filename), 'r') as file:
+        for line in file:
+            repo = line.strip()
+            if repo and not repo.startswith('#'):  # Ignore empty lines and comments
+                repos_list.append(repo)
+    if not repos_list:
+        raise ValueError("The repositories file is empty. Please add valid repository names.")
+    return repos_list
+
+
+def save_json(data, filename, type):
+    #saves data at in a json file
+    # at a spesific line
+    #{
+    #"repo": "Rdatatable/data.table",
+    #"updated_at": "2024-10-22T10:20:25Z",
+    #"streams": {
+    #"issues_with_timeline": { "after": None, "processed": 0, "total": None, "complete": False },
+    #"prs_with_comments": { "after": None, "processed": 0, "total": None, "complete": False },
+    #.....
+    # type = "prs_with_comments" or "issues_with_timeline" or "commits"
+    # we need to update that streams line only
+
+
+    import json
+    #load the json file
+    if type != "data_cursor":
+        with open(filename, 'r') as file:
+            json_data = json.load(file)
+            json_data["streams"][type].update(data)
+            json_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        #save the json file
+        try:
+            with portalocker.Lock(filename, timeout=10, flags=portalocker.LOCK_EX) as file:
+                file.seek(0)
+                file.truncate()
+                json.dump(json_data, file, indent=4)
+        except portalocker.exceptions.LockException:
+            raise
+    else:
+        
+        with open(filename, 'w') as file:
+            json.dump(data, file, indent=4)
+
+
+
+def append_rows_csv(file_path, rows, sep=cfg.CSV_separator):
+    """Append multiple rows to a CSV file."""
+    import csv
+    if not rows:
+        return
+    file_exists = os.path.isfile(file_path)
+    if file_exists:
+        with open(file_path, 'r', encoding='utf-8', newline='') as f:
+            existing_header = next(csv.reader(f, delimiter=sep), None)
+        if existing_header and list(rows[0].keys()) != existing_header:
+            raise ValueError(
+                f"Schema mismatch in {file_path}:\n"
+                f"  existing header : {existing_header}\n"
+                f"  new row keys    : {list(rows[0].keys())}\n"
+                "Delete or migrate the CSV before writing with the new schema."
+            )
+    with open(file_path, 'a', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile, delimiter=sep)
+        if not file_exists:
+            # Write header if file does not exist
+            writer.writerow(rows[0].keys())
+        for row in rows:
+            writer.writerow(row.values())
+
 
 ### MAIN FUNCTION
 def main():
